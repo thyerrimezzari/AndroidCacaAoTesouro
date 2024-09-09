@@ -1,5 +1,6 @@
 package br.edu.satc.androidnavigationcacaaotesouro
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -8,6 +9,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavOptions
@@ -26,8 +31,17 @@ import br.edu.satc.androidnavigationcacaaotesouro.ui.theme.AndroidNavigationCaca
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val sharedPref = getSharedPreferences(
+            "nome do banco aqui", Context.MODE_PRIVATE
+        )
+
         setContent {
-            AndroidNavigationCacaAoTesouroTheme {
+            var darkMode by remember {
+                mutableStateOf(sharedPref.getBoolean("DARK_MODE", false))
+            }
+
+            AndroidNavigationCacaAoTesouroTheme(darkTheme = darkMode) {
                 val navigationController = rememberNavController()
                 NavHost(navController = navigationController, startDestination = "login") {
                     composable("login") {
@@ -42,7 +56,13 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                     composable("home") {
-                        Home { navigationController.navigate("clue01") }
+                        Home(darkMode = darkMode, onDarkModeChanged = { newDarkMode ->
+                            darkMode = newDarkMode
+                            with(sharedPref.edit()) {
+                                putBoolean("DARK_MODE", newDarkMode)
+                                apply()
+                            }
+                        }) { navigationController.navigate("clue01") }
                     }
                     composable("clue01") {
                         ClueScreen01(onNavigateToNextClue = { navigationController.navigate("clue02") }) {
@@ -77,12 +97,5 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!", modifier = modifier
-    )
 }
 
